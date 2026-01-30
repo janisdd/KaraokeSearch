@@ -1,0 +1,16 @@
+.env
+playlistCaches/
+*.jpg
+*.png
+*.gif
+*.mp3
+*.mp4
+*.wav
+*.ogg
+*.flac
+*.aac
+*.m4a
+*.m4v
+*.m4b
+*.m4p
+*.m4r
