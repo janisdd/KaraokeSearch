@@ -15,7 +15,7 @@
             Marked Songs
           </NuxtLink>
           <NuxtLink
-            to="/songs"
+            to="/browseSongs"
             class="rounded-full px-3 py-1 transition hover:bg-slate-100 hover:text-slate-900"
             active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white"
           >
