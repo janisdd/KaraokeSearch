@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen bg-slate-50">
-    <header class="border-b border-slate-200 bg-white">
+    <header class="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
         <NuxtLink to="/" class="flex items-center gap-3 text-sm font-semibold text-slate-900">
           <!-- <img src="/logo.png" alt="UltraStar Info logo" style="width: 3rem;" /> -->
@@ -39,6 +39,8 @@
       </div>
     </header>
 
-    <NuxtPage />
+    <main class="pt-12">
+      <NuxtPage />
+    </main>
   </div>
 </template>
