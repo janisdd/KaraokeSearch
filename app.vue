@@ -1,12 +1,12 @@
 <template>
   <div class="min-h-screen bg-slate-50 dark:bg-slate-950">
     <header class="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
-      <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6 md:py-4">
         <NuxtLink to="/" class="flex items-center gap-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
           <!-- <img src="/logo.png" alt="UltraStar Info logo" style="width: 3rem;" /> -->
           <span>Karaoke Search</span>
         </NuxtLink>
-        <nav class="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300">
+        <nav class="hidden items-center gap-3 text-sm text-slate-600 dark:text-slate-300 md:flex">
           <NuxtLink
             to="/markedSongsList"
             class="rounded-full px-3 py-1 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
@@ -53,6 +53,74 @@
           >
             <font-awesome-icon :icon="isDark ? 'sun' : 'moon'" class="h-4 w-4" />
           </button>
+        </nav>
+        <button
+          type="button"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white md:hidden"
+          :aria-label="isMobileMenuOpen ? 'Close menu' : 'Open menu'"
+          :title="isMobileMenuOpen ? 'Close menu' : 'Open menu'"
+          @click="isMobileMenuOpen = !isMobileMenuOpen"
+        >
+          <font-awesome-icon :icon="isMobileMenuOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars'" class="h-4 w-4" />
+        </button>
+      </div>
+      <div
+        v-if="isMobileMenuOpen"
+        class="border-t border-slate-200 bg-white px-6 py-4 text-sm text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 md:hidden"
+      >
+        <nav class="flex flex-col gap-2">
+          <NuxtLink
+            to="/markedSongsList"
+            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+            @click="isMobileMenuOpen = false"
+          >
+            Marked Songs
+          </NuxtLink>
+          <NuxtLink
+            to="/browseSongs"
+            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+            @click="isMobileMenuOpen = false"
+          >
+            Browse Songs
+          </NuxtLink>
+          <NuxtLink
+            to="/localSongsIntersect"
+            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+            @click="isMobileMenuOpen = false"
+          >
+            Spotify vs Local
+          </NuxtLink>
+          <NuxtLink
+            to="/compareSpotifyPlaylists"
+            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+            @click="isMobileMenuOpen = false"
+          >
+            Spotify Playlist Compare
+          </NuxtLink>
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="button"
+              class="rounded-full p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              aria-label="Show QR code"
+              title="Show QR code"
+              @click="isQrModalOpen = true"
+            >
+              <font-awesome-icon icon="fa-solid fa-qrcode" class="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              class="rounded-full p-2 text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
+              :aria-label="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+              :title="isDark ? 'Switch to light mode' : 'Switch to dark mode'"
+              @click="toggleDarkMode"
+            >
+              <font-awesome-icon :icon="isDark ? 'sun' : 'moon'" class="h-4 w-4" />
+            </button>
+          </div>
         </nav>
       </div>
     </header>
@@ -121,6 +189,7 @@ import QRCode from "qrcode";
 
 const isDark = useState('isDarkMode', () => false)
 const isQrModalOpen = ref(false)
+const isMobileMenuOpen = ref(false)
 const qrCodeDataUrl = ref<string | null>(null)
 const qrCodeUrl = ref<string | null>(null)
 const isQrCodeLoading = ref(false)
