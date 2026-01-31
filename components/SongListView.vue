@@ -191,6 +191,19 @@ const {
                       </span>
                     </button>
                   </th>
+                  <th class="px-4 py-3">Audio</th>
+                  <th class="px-4 py-3">
+                    <button
+                      type="button"
+                      class="flex w-full items-center gap-1 text-left"
+                      @click="toggleSort('language')"
+                    >
+                      Language
+                      <span v-if="sortKey === 'language'">
+                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
+                      </span>
+                    </button>
+                  </th>
                   <th class="px-4 py-3">
                     <button
                       type="button"
@@ -215,19 +228,6 @@ const {
                       </span>
                     </button>
                   </th>
-                  <th class="px-4 py-3">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('language')"
-                    >
-                      Language
-                      <span v-if="sortKey === 'language'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3">Audio</th>
                   <th class="px-4 py-3">Song text preview</th>
                 </tr>
               </thead>
@@ -251,9 +251,6 @@ const {
                     {{ song.title }}
                   </td>
                   <td class="px-4 py-3">{{ song.artist }}</td>
-                  <td class="px-4 py-3">{{ song.year ?? '—' }}</td>
-                  <td class="px-4 py-3">{{ song.genre ?? '—' }}</td>
-                  <td class="px-4 py-3">{{ song.language ?? '—' }}</td>
                   <td class="px-4 py-3">
                     <button
                       v-if="getAudioFile(song)"
@@ -272,6 +269,9 @@ const {
                     </button>
                     <span v-else class="text-slate-400 dark:text-slate-500">—</span>
                   </td>
+                  <td class="px-4 py-3">{{ song.language ?? '—' }}</td>
+                  <td class="px-4 py-3">{{ song.year ?? '—' }}</td>
+                  <td class="px-4 py-3">{{ song.genre ?? '—' }}</td>
                   <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
                     <div class="flex items-center gap-2 whitespace-nowrap">
                       <button
