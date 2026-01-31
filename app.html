@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html {{ HTML_ATTRS }}>
+  <head {{ HEAD_ATTRS }}>
+    {{ HEAD }}
+    <script>
+      (function () {
+        try {
+          var cookieMatch = document.cookie.match(
+            /(?:^|;\\s*)theme=(dark|light)/
+          )
+          var cookieTheme = cookieMatch ? cookieMatch[1] : null
+          var stored = localStorage.getItem('theme')
+          var meta = document.querySelector(
+            'meta[name="default-theme-dark"]'
+          )
+          var metaValue = meta ? meta.getAttribute('content') : null
+          var defaultDark = metaValue === 'true'
+          var isDark =
+            cookieTheme === 'dark'
+              ? true
+              : cookieTheme === 'light'
+                ? false
+                : stored === 'dark'
+                  ? true
+                  : stored === 'light'
+                    ? false
+                    : defaultDark
+          document.documentElement.classList.toggle('dark', !!isDark)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body {{ BODY_ATTRS }}>
+    {{ APP }}
+  </body>
+</html>

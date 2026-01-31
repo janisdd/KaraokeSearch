@@ -98,8 +98,8 @@ export async function getSpotifyPlaylistFull(playListUrl: string, sdk: SpotifyAp
 	const allPages = await getAllPages(sdk, playlistId)
 	const stripped = toStripped(allPages.map(item => item.track))
 	
-	console.log(stripped)
-	console.log(stripped.length)
+	// console.log(stripped)
+	// console.log(stripped.length)
 	
   return stripped
 }

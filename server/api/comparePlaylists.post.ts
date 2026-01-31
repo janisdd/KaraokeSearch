@@ -63,10 +63,10 @@ export default defineEventHandler(async (event) => {
 
 	const intersectionTracks = Array.from(intersectionKeys).map(key => map1.get(key))
 
-	console.log("intersectionKeys", intersectionKeys)
-	console.log("unique1", unique1)
-	console.log("unique2", unique2)
-	console.log("intersectionTracks", intersectionTracks)
+	// console.log("intersectionKeys", intersectionKeys)
+	// console.log("unique1", unique1)
+	// console.log("unique2", unique2)
+	// console.log("intersectionTracks", intersectionTracks)
 	return {
 		intersectionTracks: intersectionTracks || []
 	}

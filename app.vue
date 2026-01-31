@@ -187,7 +187,13 @@
 <script setup lang="ts">
 import QRCode from "qrcode";
 
-const isDark = useState('isDarkMode', () => false)
+const runtimeConfig = useRuntimeConfig()
+const defaultThemeDark = runtimeConfig.public.defaultThemeDark === true
+const themeCookie = useCookie<string | null>('theme')
+const isDark = useState(
+  'isDarkMode',
+  () => themeCookie.value === 'dark' || (themeCookie.value == null && defaultThemeDark)
+)
 const isQrModalOpen = ref(false)
 const isMobileMenuOpen = ref(false)
 const qrCodeDataUrl = ref<string | null>(null)
@@ -195,24 +201,38 @@ const qrCodeUrl = ref<string | null>(null)
 const isQrCodeLoading = ref(false)
 const qrCodeError = ref<string | null>(null)
 
+useHead({
+  htmlAttrs: {
+    class: computed(() => (isDark.value ? 'dark' : '')),
+  },
+})
+
 const applyDarkClass = (value: boolean) => {
   if (!process.client) return
   document.documentElement.classList.toggle('dark', value)
+}
+
+const setTheme = (value: boolean) => {
+  isDark.value = value
+  themeCookie.value = value ? 'dark' : 'light'
+  if (process.client) {
+    localStorage.setItem('theme', value ? 'dark' : 'light')
+  }
+  applyDarkClass(value)
 }
 
 const initTheme = () => {
   if (!process.client) return
   const storedTheme = localStorage.getItem('theme')
   if (storedTheme === 'dark' || storedTheme === 'light') {
-    isDark.value = storedTheme === 'dark'
-  } else if (window.matchMedia) {
-    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches
+    setTheme(storedTheme === 'dark')
+  } else {
+    setTheme(defaultThemeDark)
   }
-  applyDarkClass(isDark.value)
 }
 
 const toggleDarkMode = () => {
-  isDark.value = !isDark.value
+  setTheme(!isDark.value)
 }
 
 const loadQrCode = async () => {
@@ -249,9 +269,4 @@ watch(isQrModalOpen, (isOpen) => {
   }
 })
 
-watch(isDark, (value) => {
-  if (!process.client) return
-  localStorage.setItem('theme', value ? 'dark' : 'light')
-  applyDarkClass(value)
-})
 </script>

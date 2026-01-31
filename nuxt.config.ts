@@ -13,6 +13,17 @@ export default defineNuxtConfig({
       link: [
         { rel: 'icon', type: 'image/x-icon', href: '/favicon.png' },
       ],
+      meta: [
+        {
+          name: 'default-theme-dark',
+          content: String(process.env.IS_DEFAULT_PAGE_THEME_MODE_DARK === 'true'),
+        },
+      ],
+    },
+  },
+  runtimeConfig: {
+    public: {
+      defaultThemeDark: process.env.IS_DEFAULT_PAGE_THEME_MODE_DARK === 'true',
     },
   },
 })

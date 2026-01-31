@@ -22,6 +22,13 @@ if (!SPOTIFY_CLIENT_ID || !SPOTIFY_CLIENT_SECRET) {
 
 export class ConfigHelper {
   static getPlaylistCacheDirPath() {
+
+    // check if the path exists
+    if (!fs.existsSync(PlaylistCacheDirPath)) {
+      fs.mkdirSync(PlaylistCacheDirPath, { recursive: true });
+      console.log("Playlist cache directory created", PlaylistCacheDirPath);
+    }
+
     return PlaylistCacheDirPath;
   }
 
