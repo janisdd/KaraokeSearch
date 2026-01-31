@@ -82,17 +82,18 @@ export class Indexer {
 	 */
 	async indexFile(songDirectory: string): Promise<SongInfo | null> {
 
-		if (songDirectory.startsWith("Das")) {
-			console.info("Skipping directory:", songDirectory)
-		}
-
 		const txtFiles = (await fs.promises.readdir(songDirectory)).filter((file: string) => file.endsWith(".txt"))
 		if (txtFiles.length === 0) {
 			return null
 		}
 		const songInfoPath = path.join(songDirectory, txtFiles[0])
 		const songInfoBuffer = await fs.promises.readFile(songInfoPath)
-		const detectedEncoding = chardet.detect(songInfoBuffer)
+		let detectedEncoding = chardet.detect(songInfoBuffer)
+		if (detectedEncoding === 'ISO-8859-9') {
+			console.log("Detected encoding is ISO-8859-9, changing to ISO-8859-1")
+			detectedEncoding = 'ISO-8859-1'
+		}
+
 		const songInfoFile = Indexer.decodeBuffer(songInfoBuffer, detectedEncoding)
 		// read all lines
 		const lines = songInfoFile.split("\n")
@@ -175,7 +176,7 @@ export class Indexer {
 		}
 
 		if (!songInfo.title || !songInfo.artist) {
-			console.log("Skipping song:", songDirectory)
+			console.log("Empty song title or artist:", songDirectory)
 		}
 
 		return songInfo
