@@ -212,6 +212,12 @@ const formatTime = (value: number) => {
 
 const currentTimeLabel = computed(() => formatTime(currentTime.value));
 const durationLabel = computed(() => formatTime(duration.value));
+const progressPercent = computed(() => {
+  if (!duration.value) {
+    return 0;
+  }
+  return Math.min(100, Math.max(0, (currentTime.value / duration.value) * 100));
+});
 </script>
 
 <template>
@@ -471,11 +477,67 @@ const durationLabel = computed(() => formatTime(duration.value));
           min="0"
           :max="duration || 0"
           step="0.1"
-          class="w-full accent-slate-700"
+          class="player-range w-full"
           :disabled="!duration"
+          :style="{ '--progress': `${progressPercent}%` }"
           aria-label="Audio progress"
         />
       </div>
     </div>
   </main>
 </template>
+
+<style scoped>
+.player-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  outline: none;
+}
+
+.player-range::-webkit-slider-runnable-track {
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    #1f8dd6 0%,
+    #1f8dd6 var(--progress, 0%),
+    #e2e8f0 var(--progress, 0%),
+    #e2e8f0 100%
+  );
+}
+
+.player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 0;
+  height: 0;
+  border: none;
+  box-shadow: none;
+}
+
+.player-range::-moz-range-track {
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #e2e8f0;
+}
+
+.player-range::-moz-range-thumb {
+  width: 0;
+  height: 0;
+  border: none;
+  background: transparent;
+}
+
+.player-range::-moz-range-progress {
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: #1f8dd6;
+}
+
+.player-range:disabled {
+  background: #e2e8f0;
+}
+</style>

@@ -35,7 +35,6 @@ export default defineEventHandler(async (event) => {
   setHeader(event, "Accept-Ranges", "bytes");
 
   if (!rangeHeader || typeof rangeHeader !== "string") {
-    console.log("No range header, sending full file");
     setHeader(event, "Content-Length", fileSize);
     return sendStream(event, fs.createReadStream(resolvedPath));
   }
@@ -54,8 +53,6 @@ export default defineEventHandler(async (event) => {
 
   const clampedEnd = Math.min(end, fileSize - 1);
   const chunkSize = clampedEnd - start + 1;
-
-  console.log("Sending chunk", start, clampedEnd, chunkSize);
 
   setResponseStatus(event, 206);
   setHeader(event, "Content-Range", `bytes ${start}-${clampedEnd}/${fileSize}`);
