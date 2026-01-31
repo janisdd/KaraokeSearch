@@ -203,6 +203,15 @@ const getAudioFile = (song: SongInfo) => {
   return `/api/song-audio?path=${encodeURIComponent(audioFile)}`;
 };
 
+const getCoverFile = (song: SongInfo) => {
+  const coverFile = song.coverFile?.trim();
+  if (!coverFile) {
+    return null;
+  }
+
+  return `/api/song-cover?path=${encodeURIComponent(coverFile)}`;
+};
+
 const {
   activeAudioKey,
   activeSong,
@@ -217,6 +226,10 @@ const {
   getSongKey,
   getAudioFile,
 });
+
+const activeCoverUrl = computed(() =>
+  activeSong.value ? getCoverFile(activeSong.value) : null,
+);
 
 const playerTime = computed({
   get: () => currentTime.value,
@@ -511,48 +524,67 @@ const confirmUnmarkAll = () => {
       class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur"
     >
       <div class="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-3">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-          <div class="min-w-0">
-            <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Now playing
-            </div>
-            <div class="truncate text-sm font-semibold text-slate-900">
-              {{ activeSong.title }} — {{ activeSong.artist }}
+        <div class="flex items-start gap-3">
+          <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-100">
+            <img
+              v-if="activeCoverUrl"
+              :src="activeCoverUrl"
+              :alt="`${activeSong.title} cover`"
+              class="h-full w-full object-cover"
+              loading="lazy"
+            />
+            <div
+              v-else
+              class="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase text-slate-400"
+            >
+              Cover
             </div>
           </div>
-          <div class="flex items-center gap-2">
-            <div class="text-xs tabular-nums text-slate-500">
-              {{ currentTimeLabel }} / {{ durationLabel }}
+          <div class="flex min-w-0 flex-1 flex-col gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Now playing
+                </div>
+                <div class="truncate text-sm font-semibold text-slate-900">
+                  {{ activeSong.title }} — {{ activeSong.artist }}
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="text-xs tabular-nums text-slate-500">
+                  {{ currentTimeLabel }} / {{ durationLabel }}
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50"
+                  :aria-label="isActiveAudioPlaying ? 'Pause audio' : 'Play audio'"
+                  @click="toggleAudioPlayback(activeSong)"
+                >
+                  {{ isActiveAudioPlaying ? "⏸" : "▶" }}
+                </button>
+                <button
+                  type="button"
+                  class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 shadow-sm hover:bg-slate-50"
+                  aria-label="Close audio player"
+                  @click="stopActiveAudio"
+                >
+                  ×
+                </button>
+              </div>
             </div>
-            <button
-              type="button"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-600 shadow-sm hover:bg-slate-50"
-              :aria-label="isActiveAudioPlaying ? 'Pause audio' : 'Play audio'"
-              @click="toggleAudioPlayback(activeSong)"
-            >
-              {{ isActiveAudioPlaying ? "⏸" : "▶" }}
-            </button>
-            <button
-              type="button"
-              class="inline-flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 text-slate-500 shadow-sm hover:bg-slate-50"
-              aria-label="Close audio player"
-              @click="stopActiveAudio"
-            >
-              ×
-            </button>
+            <input
+              v-model.number="playerTime"
+              type="range"
+              min="0"
+              :max="duration || 0"
+              step="0.1"
+              class="player-range w-full"
+              :disabled="!duration"
+              :style="{ '--progress': `${progressPercent}%` }"
+              aria-label="Audio progress"
+            />
           </div>
         </div>
-        <input
-          v-model.number="playerTime"
-          type="range"
-          min="0"
-          :max="duration || 0"
-          step="0.1"
-          class="player-range w-full"
-          :disabled="!duration"
-          :style="{ '--progress': `${progressPercent}%` }"
-          aria-label="Audio progress"
-        />
       </div>
     </div>
   </main>

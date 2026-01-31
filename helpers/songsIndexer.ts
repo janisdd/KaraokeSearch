@@ -193,7 +193,14 @@ export class Indexer {
 				songInfo.videoFile = line.split(":")[1].trim()
 			}
 			if (lineLower.startsWith("#cover:")) {
-				songInfo.coverFile = line.split(":")[1].trim()
+				const rawCoverFile = line.split(":")[1].trim()
+				if (rawCoverFile) {
+					const resolvedCoverPath = path.isAbsolute(rawCoverFile)
+						? rawCoverFile
+						: path.join(songDirectory, rawCoverFile)
+					const relativeCoverPath = path.relative(songsRoot, resolvedCoverPath)
+					songInfo.coverFile = relativeCoverPath.split(path.sep).join("/")
+				}
 			}
 
 			// this is part of the song text
