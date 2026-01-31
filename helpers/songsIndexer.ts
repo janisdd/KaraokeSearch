@@ -1,6 +1,7 @@
 import type { SongInfo } from "~~/types/song"
 import fs from "fs"
 import path from "path"
+import * as chardet from "chardet"
 
 export class Indexer {
 	private static directoryCache = new Map<string, { hash: string; songs: SongInfo[] }>()
@@ -11,6 +12,39 @@ export class Indexer {
 			hash = (hash * 31 + value.charCodeAt(i)) | 0
 		}
 		return hash.toString(16)
+	}
+
+	private static normalizeEncoding(encoding: string | null): BufferEncoding {
+		if (!encoding) return "utf8"
+		const normalized = encoding.toLowerCase()
+		const map: Record<string, BufferEncoding> = {
+			"utf-8": "utf8",
+			"utf8": "utf8",
+			"utf-16le": "utf16le",
+			"utf16le": "utf16le",
+			"iso-8859-1": "latin1",
+			"windows-1252": "latin1",
+			"latin1": "latin1",
+			"ascii": "ascii",
+		}
+		return map[normalized] ?? "utf8"
+	}
+
+	private static decodeBuffer(buffer: Buffer, encodingLabel: string | null): string {
+		const normalized = encodingLabel?.toLowerCase()
+		if (normalized === "utf-16be" || normalized === "utf16be") {
+			const swapped = Buffer.allocUnsafe(buffer.length)
+			for (let i = 0; i < buffer.length; i += 2) {
+				if (i + 1 < buffer.length) {
+					swapped[i] = buffer[i + 1]
+					swapped[i + 1] = buffer[i]
+				} else {
+					swapped[i] = buffer[i]
+				}
+			}
+			return swapped.toString("utf16le")
+		}
+		return buffer.toString(Indexer.normalizeEncoding(encodingLabel))
 	}
 
 	/**
@@ -47,11 +81,19 @@ export class Indexer {
 	 * @returns the song info or null if the song is not found
 	 */
 	async indexFile(songDirectory: string): Promise<SongInfo | null> {
+
+		if (songDirectory.startsWith("Das")) {
+			console.info("Skipping directory:", songDirectory)
+		}
+
 		const txtFiles = (await fs.promises.readdir(songDirectory)).filter((file: string) => file.endsWith(".txt"))
 		if (txtFiles.length === 0) {
 			return null
 		}
-		const songInfoFile = await fs.promises.readFile(path.join(songDirectory, txtFiles[0]), "utf-8")
+		const songInfoPath = path.join(songDirectory, txtFiles[0])
+		const songInfoBuffer = await fs.promises.readFile(songInfoPath)
+		const detectedEncoding = chardet.detect(songInfoBuffer)
+		const songInfoFile = Indexer.decodeBuffer(songInfoBuffer, detectedEncoding)
 		// read all lines
 		const lines = songInfoFile.split("\n")
 
@@ -70,7 +112,7 @@ export class Indexer {
 		}
 
 		for (const line of lines) {
-			const lineLower = line.toLowerCase()
+			const lineLower = line.toLowerCase().trim()
 
 			if (lineLower.startsWith("#artist:")) {
 				songInfo.artist = line.split(":")[1].trim()
