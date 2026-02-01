@@ -1,11 +1,12 @@
 <script setup lang="ts">
+import { useSongs } from "~~/composables/useSongs";
 import type { SongInfo } from "~~/types/song";
 
 defineOptions({
   name: "MarkedSongsListPage",
 });
 
-const { data: songs, pending, error } = await useFetch<SongInfo[]>("/api/songs");
+const { songs, pending, error } = useSongs();
 const { markedSongKeys, unmarkAllSongs } = useMarkedSongs();
 
 const getSongKey = (song: SongInfo) => song.id;

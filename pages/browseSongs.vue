@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import type { SongInfo } from "~~/types/song";
+import { useSongs } from "~~/composables/useSongs";
 
 defineOptions({
   name: "SongsPage",
 });
 
-const { data: songs, pending, error } = await useFetch<SongInfo[]>("/api/songs");
+const { songs, pending, error } = useSongs();
 
 const totalCount = computed(() => songs.value?.length ?? 0);
 const subtitle = computed(() => `Found ${totalCount.value} song(s).`);
