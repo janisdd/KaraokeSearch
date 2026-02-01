@@ -126,7 +126,7 @@
     </header>
 
     <main class="pt-12">
-      <NuxtPage />
+      <NuxtPage :keepalive="{ include: ['SongsPage', 'MarkedSongsListPage'] }" />
     </main>
 
     <div
