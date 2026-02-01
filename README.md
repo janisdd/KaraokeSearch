@@ -4,6 +4,11 @@
 
 A little helper for UltraStar karaoke sessions.
 
+## Requirements
+
+- nodejs (20.x or later)
+- yarn
+
 
 ## Install
 
