@@ -48,7 +48,8 @@ export class Indexer {
 	 * @returns a list of song infos
 	 */
 	static async indexFilesInDirectory(songsDirectory: string): Promise<void> {
-		console.time("indexFilesInDirectory")
+		const timerName = `Indexed Songs In Directory: ${songsDirectory}`
+		console.time(timerName)
 
 		const entries = await fs.promises.readdir(songsDirectory, { withFileTypes: true })
 		const songDirectories = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name)
@@ -69,7 +70,7 @@ export class Indexer {
 			Indexer._songsMap.set(entry.songInfo.id, entry.songInfo)
 			Indexer._songRootMap.set(entry.songInfo.id, songsDirectory)
 		}
-		console.timeEnd("indexFilesInDirectory")
+		console.timeEnd(timerName)
 	}
 
 	static getSongsMap(): Map<string, SongInfo> {
