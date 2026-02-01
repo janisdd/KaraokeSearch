@@ -1,5 +1,7 @@
 # Karaoke Search
 
+![logo](public/logo.png)
+
 A little helper for UltraStar karaoke sessions.
 
 
