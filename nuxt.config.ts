@@ -21,6 +21,9 @@ export default defineNuxtConfig({
       ],
     },
   },
+  build: {
+    transpile: ['@fortawesome/vue-fontawesome'],
+  },
   runtimeConfig: {
     public: {
       defaultThemeDark: process.env.IS_DEFAULT_PAGE_THEME_MODE_DARK === 'true',
