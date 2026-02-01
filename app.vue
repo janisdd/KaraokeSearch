@@ -149,34 +149,80 @@
             <font-awesome-icon icon="fa-solid fa-xmark" class="h-4 w-4" />
           </button>
         </div>
-        <div class="mt-5 flex items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-8 dark:border-slate-700 dark:bg-slate-800">
-          <div
-            v-if="isQrCodeLoading"
-            class="flex h-64 w-64 items-center justify-center rounded-lg bg-white text-sm font-semibold uppercase tracking-wide text-slate-400 shadow-sm dark:bg-slate-900 dark:text-slate-500"
-          >
-            Generating...
+        <div class="mt-5 flex flex-col gap-4 rounded-xl border-2 border-dashed border-slate-200 bg-slate-50 p-6 dark:border-slate-700 dark:bg-slate-800">
+          <div class="flex flex-col gap-4">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Size</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  v-for="sizeOption in qrCodeSizeOptions"
+                  :key="sizeOption.value"
+                  type="button"
+                  class="rounded-full px-3 py-1 text-xs font-semibold transition"
+                  :class="sizeOption.value === qrCodeSize ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800'"
+                  @click="qrCodeSize = sizeOption.value"
+                >
+                  {{ sizeOption.label }}
+                </button>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Error correction</p>
+              <div class="mt-2 flex flex-wrap gap-2">
+                <button
+                  v-for="levelOption in qrCodeErrorCorrectionOptions"
+                  :key="levelOption.value"
+                  type="button"
+                  class="rounded-full px-3 py-1 text-xs font-semibold transition"
+                  :class="levelOption.value === qrCodeErrorCorrectionLevel ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900' : 'bg-white text-slate-600 ring-1 ring-inset ring-slate-200 hover:bg-slate-100 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700 dark:hover:bg-slate-800'"
+                  @click="qrCodeErrorCorrectionLevel = levelOption.value"
+                >
+                  {{ levelOption.label }}
+                </button>
+              </div>
+            </div>
           </div>
-          <div
-            v-else-if="qrCodeError"
-            class="flex h-64 w-64 items-center justify-center rounded-lg bg-white text-sm font-semibold text-rose-600 shadow-sm dark:bg-slate-900 dark:text-rose-300"
-          >
-            {{ qrCodeError }}
-          </div>
-          <div v-else-if="qrCodeDataUrl" class="flex flex-col items-center gap-3">
-            <img
-              :src="qrCodeDataUrl"
-              :alt="qrCodeUrl ? `QR code for ${qrCodeUrl}` : 'QR code'"
-              class="h-64 w-64 rounded-lg bg-white p-3 shadow-sm dark:bg-slate-900"
-            />
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              {{ qrCodeUrl }}
-            </p>
-          </div>
-          <div
-            v-else
-            class="flex h-64 w-64 items-center justify-center rounded-lg bg-white text-sm font-semibold uppercase tracking-wide text-slate-400 shadow-sm dark:bg-slate-900 dark:text-slate-500"
-          >
-            QR Code
+          <div class="flex flex-col items-center gap-4">
+            <div
+              v-if="isQrCodeLoading"
+              :class="qrCodeSizeClass"
+              class="flex items-center justify-center rounded-lg bg-white text-sm font-semibold uppercase tracking-wide text-slate-400 shadow-sm dark:bg-slate-900 dark:text-slate-500"
+            >
+              Generating...
+            </div>
+            <div
+              v-else-if="qrCodeError"
+              :class="qrCodeSizeClass"
+              class="flex items-center justify-center rounded-lg bg-white text-sm font-semibold text-rose-600 shadow-sm dark:bg-slate-900 dark:text-rose-300"
+            >
+              {{ qrCodeError }}
+            </div>
+            <div v-else-if="qrCodeDataUrl" class="flex flex-col items-center gap-3">
+              <p class="text-slate-500 dark:text-slate-400">
+                {{ qrCodeUrl }}
+              </p>
+              <img
+                :src="qrCodeDataUrl"
+                :alt="qrCodeUrl ? `QR code for ${qrCodeUrl}` : 'QR code'"
+                :class="qrCodeSizeClass"
+                class="rounded-lg bg-white p-3 shadow-sm dark:bg-slate-900"
+              />
+            </div>
+            <div
+              v-else
+              :class="qrCodeSizeClass"
+              class="flex items-center justify-center rounded-lg bg-white text-sm font-semibold uppercase tracking-wide text-slate-400 shadow-sm dark:bg-slate-900 dark:text-slate-500"
+            >
+              QR Code
+            </div>
+            <button
+              type="button"
+              class="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 dark:disabled:bg-slate-700 dark:disabled:text-slate-400"
+              :disabled="!qrCodeDataUrl || isQrCodeLoading"
+              @click="openQrPrintPage"
+            >
+              Open print page
+            </button>
           </div>
         </div>
       </div>
@@ -186,6 +232,7 @@
 
 <script setup lang="ts">
 import QRCode from "qrcode";
+import type { QRCodeErrorCorrectionLevel } from "qrcode";
 
 const runtimeConfig = useRuntimeConfig()
 const defaultThemeDark = runtimeConfig.public.defaultThemeDark === true
@@ -200,6 +247,31 @@ const qrCodeDataUrl = ref<string | null>(null)
 const qrCodeUrl = ref<string | null>(null)
 const isQrCodeLoading = ref(false)
 const qrCodeError = ref<string | null>(null)
+const qrCodeSizeOptions = [
+  { label: 'Small', value: 192 },
+  { label: 'Medium', value: 256 },
+  { label: 'Large', value: 320 },
+]
+const qrCodeErrorCorrectionOptions = [
+  { label: 'Low (L)', value: 'L' },
+  { label: 'Medium (M)', value: 'M' },
+  { label: 'Quartile (Q)', value: 'Q' },
+  { label: 'High (H)', value: 'H' },
+ ] as const
+const qrCodeSize = ref(qrCodeSizeOptions[2].value)
+const qrCodeErrorCorrectionLevel = ref<QRCodeErrorCorrectionLevel>(
+  qrCodeErrorCorrectionOptions[1].value
+)
+const qrCodeSizeClass = computed(() => {
+  switch (qrCodeSize.value) {
+    case 192:
+      return 'h-48 w-48'
+    case 320:
+      return 'h-80 w-80'
+    default:
+      return 'h-64 w-64'
+  }
+})
 
 useHead({
   htmlAttrs: {
@@ -246,9 +318,9 @@ const loadQrCode = async () => {
     const response = await $fetch<{ url: string }>('/api/app-url')
     qrCodeUrl.value = response.url
     qrCodeDataUrl.value = await QRCode.toDataURL(response.url, {
-      width: 320,
+      width: qrCodeSize.value,
       margin: 1,
-      errorCorrectionLevel: 'M',
+      errorCorrectionLevel: qrCodeErrorCorrectionLevel.value,
     })
   } catch (error) {
     console.error('Failed to generate QR code', error)
@@ -259,12 +331,80 @@ const loadQrCode = async () => {
   }
 }
 
+const openQrPrintPage = () => {
+  if (!process.client || !qrCodeDataUrl.value || !qrCodeUrl.value) {
+    return
+  }
+
+  const printWindow = window.open('', '_blank')
+  if (!printWindow) {
+    return
+  }
+
+  const html = `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>QR Code for Karaoke</title>
+    <style>
+      :root { color-scheme: light; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        display: flex;
+        justify-content: center;
+      }
+      .page {
+        padding: 32px;
+        text-align: center;
+        display: grid;
+        gap: 24px;
+        justify-items: center;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .url {
+        font-size: 14px;
+        color: #0f172a;
+        word-break: break-all;
+      }
+      .qr {
+        display: block;
+        width: ${qrCodeSize.value}px;
+        height: ${qrCodeSize.value}px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <div class="title">Karaoke</div>
+      <div class="url">${qrCodeUrl.value}</div>
+      <img class="qr" src="${qrCodeDataUrl.value}" alt="QR code" />
+    </div>
+  </body>
+</html>`
+
+  printWindow.document.open()
+  printWindow.document.write(html)
+  printWindow.document.close()
+  printWindow.focus()
+}
+
 onMounted(() => {
   initTheme()
 })
 
 watch(isQrModalOpen, (isOpen) => {
   if (isOpen) {
+    loadQrCode()
+  }
+})
+
+watch([qrCodeSize, qrCodeErrorCorrectionLevel], () => {
+  if (isQrModalOpen.value) {
     loadQrCode()
   }
 })
