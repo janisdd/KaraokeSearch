@@ -58,9 +58,12 @@ export default defineNitroPlugin(async () => {
       await Indexer.indexFilesInDirectory(dirPath);
       Logger.log(`[nuxt start] Songs indexed successfully for ${dirPath}`);
     }
-    Logger.log(`[nuxt start] --- All Songs indexed successfully for ${songsDirPaths.length} dirs --- `);
-    Logger.log(`[nuxt start] --- Total songs indexed: ${Indexer.getSongsMap().size} --- `);
+    Logger.log(`[nuxt start] All Songs indexed successfully for ${songsDirPaths.length} dirs`);
+    Logger.log(`[nuxt start] Total songs indexed: ${Indexer.getSongsMap().size}`);
   } catch (error) {
     Logger.error(`[nuxt start] Error indexing songs: ${error instanceof Error ? error.message : String(error)}`);
   }
+
+  // do not use logger here, we always want to show this message (regardless of log level)
+  console.log(`[nuxt start] --- Startup completed --- `);
 })
