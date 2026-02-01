@@ -14,7 +14,7 @@ const props = defineProps<{
   emptyMessage: string;
 }>();
 
-const { isMarkedSong, toggleMarkedSong } = useMarkedSongs();
+const { isMarkedSong, toggleMarkedSong, markedSongKeys } = useMarkedSongs();
 
 const songSource = computed(() => props.songs ?? []);
 
@@ -64,10 +64,23 @@ const updateContainerHeight = () => {
   }
 };
 
-const handleScroll = () => {
+let scrollRafId: number | null = null;
+
+const syncScrollTop = () => {
   if (scrollContainer.value) {
     scrollTop.value = scrollContainer.value.scrollTop;
   }
+};
+
+const handleScroll = () => {
+  if (!scrollContainer.value || scrollRafId !== null) {
+    return;
+  }
+
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null;
+    syncScrollTop();
+  });
 };
 
 const totalRows = computed(() => sortedSongs.value.length);
@@ -110,7 +123,7 @@ const scrollToActiveSongInList = () => {
 
 onMounted(() => {
   updateContainerHeight();
-  handleScroll();
+  syncScrollTop();
   if (process.client) {
     window.addEventListener("resize", updateContainerHeight);
   }
@@ -120,6 +133,10 @@ onBeforeUnmount(() => {
   if (process.client) {
     window.removeEventListener("resize", updateContainerHeight);
   }
+  if (scrollRafId !== null) {
+    cancelAnimationFrame(scrollRafId);
+    scrollRafId = null;
+  }
 });
 
 watch(
@@ -127,7 +144,7 @@ watch(
   () => {
     nextTick(() => {
       updateContainerHeight();
-      handleScroll();
+      syncScrollTop();
     });
   },
 );
@@ -242,7 +259,7 @@ watch(
             <div
               ref="scrollContainer"
               class="min-h-0 flex-1 overflow-auto"
-              @scroll="handleScroll"
+              @scroll.passive="handleScroll"
             >
               <table class="min-w-full text-left text-sm text-slate-700 dark:text-slate-200">
               <thead
@@ -314,7 +331,20 @@ watch(
                   <th class="px-4 py-3">Song text preview</th>
                 </tr>
               </thead>
-              <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tbody
+                class="divide-y divide-slate-100 dark:divide-slate-800"
+                v-memo="[
+                  visibleSongs,
+                  topSpacerHeight,
+                  bottomSpacerHeight,
+                  selectedSongKey,
+                  activeAudioKey,
+                  isActiveAudioPlaying,
+                  markedSongKeys,
+                  searchMode,
+                  lyricsQuery,
+                ]"
+              >
                 <tr aria-hidden="true">
                   <td :colspan="8" class="p-0" :style="{ height: `${topSpacerHeight}px` }" />
                 </tr>
