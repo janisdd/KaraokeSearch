@@ -236,6 +236,9 @@
 <script setup lang="ts">
 import QRCode from "qrcode";
 import type { QRCodeErrorCorrectionLevel } from "qrcode";
+import { AllCommunityModule, ModuleRegistry } from 'ag-grid-community'; 
+
+ModuleRegistry.registerModules([AllCommunityModule]);
 
 const runtimeConfig = useRuntimeConfig()
 const defaultThemeDark = runtimeConfig.public.defaultThemeDark === true

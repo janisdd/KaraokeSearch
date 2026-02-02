@@ -1,6 +1,18 @@
 <script setup lang="ts">
+import { AgGridVue } from "ag-grid-vue3";
+import type {
+  ColDef,
+  GridApi,
+  GridReadyEvent,
+  ICellRendererParams,
+} from "ag-grid-community";
+import type { PropType } from "vue";
+import { defineComponent, h, resolveComponent, shallowRef } from "vue";
 import type { SongInfo } from "~~/types/song";
 import { useSongListView } from "~~/composables/useSongListView";
+
+// import "ag-grid-community/styles/ag-grid.css";
+// import "ag-grid-community/styles/ag-theme-quartz.css";
 
 const props = defineProps<{
   title: string;
@@ -27,7 +39,6 @@ const {
   durationLabel,
   getAudioFile,
   getSongKey,
-  getSongRowId,
   getSongTextPreview,
   isActiveAudioPlaying,
   lyricsQuery,
@@ -38,13 +49,10 @@ const {
   selectedSongKey,
   selectedSongName,
   selectedSongText,
-  sortDirection,
-  sortKey,
   sortedSongs,
   stopActiveAudio,
   toggleAudioPlayback,
   toggleSongText,
-  toggleSort,
 } = useSongListView({
   songs: songSource,
   stateKeyPrefix: props.stateKeyPrefix,
@@ -52,56 +60,216 @@ const {
 });
 
 const rowHeight = 64;
-const overscan = 6;
-const scrollContainer = ref<HTMLElement | null>(null);
-const scrollTop = ref(0);
-const containerHeight = ref(0);
+const gridApi = shallowRef<GridApi | null>(null);
 
-const updateContainerHeight = () => {
-  if (scrollContainer.value) {
-    containerHeight.value = scrollContainer.value.clientHeight;
-  }
+const onGridReady = (event: GridReadyEvent) => {
+  gridApi.value = event.api;
 };
 
-let scrollRafId: number | null = null;
-
-const syncScrollTop = () => {
-  if (scrollContainer.value) {
-    scrollTop.value = scrollContainer.value.scrollTop;
-  }
-};
-
-const handleScroll = () => {
-  if (!scrollContainer.value || scrollRafId !== null) {
+const refreshGrid = (refreshSort = false) => {
+  if (!gridApi.value) {
     return;
   }
-
-  scrollRafId = requestAnimationFrame(() => {
-    scrollRafId = null;
-    syncScrollTop();
-  });
+  gridApi.value.refreshCells({ force: true });
+  if (refreshSort) {
+    gridApi.value.refreshClientSideRowModel("sort");
+  }
 };
 
-const totalRows = computed(() => sortedSongs.value.length);
-const startIndex = computed(() =>
-  Math.max(0, Math.floor(scrollTop.value / rowHeight) - overscan),
-);
-const endIndex = computed(() =>
-  Math.min(
-    totalRows.value,
-    Math.ceil((scrollTop.value + containerHeight.value) / rowHeight) + overscan,
-  ),
-);
-const visibleSongs = computed(() =>
-  sortedSongs.value.slice(startIndex.value, endIndex.value),
-);
-const topSpacerHeight = computed(() => startIndex.value * rowHeight);
-const bottomSpacerHeight = computed(
-  () => (totalRows.value - endIndex.value) * rowHeight,
-);
+const MarkCell = defineComponent({
+  props: {
+    params: {
+      type: Object as PropType<ICellRendererParams<SongInfo>>,
+      required: true,
+    },
+  },
+  setup(props) {
+    return () => {
+      const song = props.params.data;
+      if (!song) {
+        return null;
+      }
+      const key = getSongKey(song);
+      return h("input", {
+        type: "checkbox",
+        class: "h-4 w-4 accent-slate-700 dark:accent-slate-300",
+        checked: isMarkedSong(key),
+        "aria-label": `Mark ${song.artist} - ${song.title}`,
+        onChange: () => toggleMarkedSong(key),
+      });
+    };
+  },
+});
+
+const AudioCell = defineComponent({
+  props: {
+    params: {
+      type: Object as PropType<ICellRendererParams<SongInfo>>,
+      required: true,
+    },
+  },
+  setup(props) {
+    const FontAwesomeIcon = resolveComponent("font-awesome-icon");
+    return () => {
+      const song = props.params.data;
+      if (!song) {
+        return null;
+      }
+      const audioFile = getAudioFile(song);
+      if (!audioFile) {
+        return h("span", { class: "text-slate-400 dark:text-slate-500" }, "—");
+      }
+      const isActive =
+        activeAudioKey.value === getSongKey(song) && isActiveAudioPlaying.value;
+      return h(
+        "button",
+        {
+          type: "button",
+          class:
+            "inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+          "aria-label": isActive ? "Pause audio" : "Play audio",
+          onClick: () => toggleAudioPlayback(song),
+        },
+        [
+          h(FontAwesomeIcon as any, {
+            icon: isActive ? "fa-solid fa-pause" : "fa-solid fa-play",
+          }),
+        ],
+      );
+    };
+  },
+});
+
+const makeTextCell = (className: string) =>
+  defineComponent({
+    props: {
+      params: {
+        type: Object as PropType<ICellRendererParams<SongInfo>>,
+        required: true,
+      },
+    },
+    setup(props) {
+      return () =>
+        h(
+          "span",
+          { class: `song-cell-2lines ${className}` },
+          props.params.value ?? "—",
+        );
+    },
+  });
+
+const PreviewCell = defineComponent({
+  props: {
+    params: {
+      type: Object as PropType<ICellRendererParams<SongInfo>>,
+      required: true,
+    },
+  },
+  setup(props) {
+    return () => {
+      const song = props.params.data;
+      if (!song) {
+        return null;
+      }
+      const key = getSongKey(song);
+      return h("div", { class: "flex items-start gap-2" }, [
+        h(
+          "button",
+          {
+            type: "button",
+            class:
+              "inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+            "aria-label":
+              selectedSongKey.value === key ? "Hide song text" : "Show song text",
+            onClick: () => toggleSongText(song),
+          },
+          selectedSongKey.value === key ? "▾" : "▸",
+        ),
+        h(
+          "span",
+          { class: "song-cell-2lines song-cell-preview text-slate-600 dark:text-slate-300" },
+          getSongTextPreview(song),
+        ),
+      ]);
+    };
+  },
+});
+
+const columnDefs = computed<ColDef<SongInfo>[]>(() => [
+  {
+    headerName: "Mark",
+    colId: "mark",
+    width: 70,
+    sortable: true,
+    valueGetter: (params) =>
+      params.data && isMarkedSong(getSongKey(params.data)) ? 1 : 0,
+    cellRenderer: MarkCell,
+  },
+  {
+    headerName: "Title",
+    field: "title",
+    // minWidth: 90,
+    width: 160,
+    // flex: 1,
+    cellRenderer: makeTextCell("song-cell-title"),
+  },
+  {
+    headerName: "Artist",
+    field: "artist",
+    width: 140,
+    // flex: 1,
+    cellRenderer: makeTextCell("song-cell-artist"),
+  },
+  {
+    headerName: "Audio",
+    colId: "audio",
+    width: 90,
+    sortable: false,
+    valueGetter: (params) => (params.data && getAudioFile(params.data) ? 1 : 0),
+    cellRenderer: AudioCell,
+  },
+  {
+    headerName: "Language",
+    field: "language",
+    width: 100,
+    // flex: 1,
+    valueFormatter: (params) => params.value ?? "—",
+    cellRenderer: makeTextCell("song-cell-language"),
+  },
+  {
+    headerName: "Year",
+    field: "year",
+    width: 80,
+    valueFormatter: (params) => params.value ?? "—",
+  },
+  {
+    headerName: "Genre",
+    field: "genre",
+    width: 140,
+    valueFormatter: (params) => params.value ?? "—",
+    cellRenderer: makeTextCell("song-cell-genre"),
+  },
+  {
+    headerName: "Song text preview",
+    colId: "preview",
+    minWidth: 220,
+    maxWidth: 220,
+    // flex: 2,
+    sortable: false,
+    valueGetter: (params) =>
+      params.data ? getSongTextPreview(params.data) : "—",
+    cellRenderer: PreviewCell,
+  },
+]);
+
+const defaultColDef: ColDef = {
+  sortable: true,
+  resizable: true,
+  suppressMovable: true,
+};
 
 const scrollToActiveSongInList = () => {
-  if (!process.client || !activeSong.value || !scrollContainer.value) {
+  if (!process.client || !activeSong.value || !gridApi.value) {
     return;
   }
 
@@ -113,39 +281,23 @@ const scrollToActiveSongInList = () => {
     return;
   }
 
-  const targetTop = index * rowHeight - containerHeight.value / 2 + rowHeight / 2;
-  scrollContainer.value.scrollTo({
-    top: Math.max(0, targetTop),
-    behavior: "smooth",
-  });
+  gridApi.value.ensureIndexVisible(index, "middle");
 };
 
-onMounted(() => {
-  updateContainerHeight();
-  syncScrollTop();
-  if (process.client) {
-    window.addEventListener("resize", updateContainerHeight);
-  }
+watch([activeAudioKey, isActiveAudioPlaying, selectedSongKey], () => {
+  refreshGrid();
 });
 
-onBeforeUnmount(() => {
-  if (process.client) {
-    window.removeEventListener("resize", updateContainerHeight);
-  }
-  if (scrollRafId !== null) {
-    cancelAnimationFrame(scrollRafId);
-    scrollRafId = null;
-  }
+watch([searchMode, lyricsQuery], () => {
+  refreshGrid();
 });
 
 watch(
-  () => sortedSongs.value.length,
+  markedSongKeys,
   () => {
-    nextTick(() => {
-      updateContainerHeight();
-      syncScrollTop();
-    });
+    refreshGrid(true);
   },
+  { deep: true },
 );
 </script>
 
@@ -254,170 +406,14 @@ watch(
             v-if="songSource.length"
             class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
           >
-            <div
-              ref="scrollContainer"
-              class="min-h-0 flex-1 overflow-auto"
-              @scroll.passive="handleScroll"
-            >
-              <table class="min-w-full w-max table-auto text-left text-sm text-slate-700 dark:text-slate-200">
-              <thead
-                class="sticky top-0 z-10 bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-              >
-                <tr>
-                  <th class="px-4 py-3">Mark</th>
-                  <th class="px-4 py-3 min-w-[16rem]">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('title')"
-                    >
-                      Title
-                      <span v-if="sortKey === 'title'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 min-w-[12rem]">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('artist')"
-                    >
-                      Artist
-                      <span v-if="sortKey === 'artist'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3">Audio</th>
-                  <th class="px-4 py-3 min-w-[8rem]">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('language')"
-                    >
-                      Language
-                      <span v-if="sortKey === 'language'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 min-w-[12rem]">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('year')"
-                    >
-                      Year
-                      <span v-if="sortKey === 'year'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3">
-                    <button
-                      type="button"
-                      class="flex w-full items-center gap-1 text-left"
-                      @click="toggleSort('genre')"
-                    >
-                      Genre
-                      <span v-if="sortKey === 'genre'">
-                        {{ sortDirection === 'asc' ? '▲' : '▼' }}
-                      </span>
-                    </button>
-                  </th>
-                  <th class="px-4 py-3 min-w-[18rem]">Song text preview</th>
-                </tr>
-              </thead>
-              <tbody
-                class="divide-y divide-slate-100 dark:divide-slate-800"
-                v-memo="[
-                  visibleSongs,
-                  topSpacerHeight,
-                  bottomSpacerHeight,
-                  selectedSongKey,
-                  activeAudioKey,
-                  isActiveAudioPlaying,
-                  markedSongKeys,
-                  searchMode,
-                  lyricsQuery,
-                ]"
-              >
-                <tr aria-hidden="true">
-                  <td :colspan="8" class="p-0" :style="{ height: `${topSpacerHeight}px` }" />
-                </tr>
-                <tr
-                  v-for="song in visibleSongs"
-                  :key="getSongKey(song)"
-                  :id="getSongRowId(song)"
-                  class="song-row odd:bg-white even:bg-slate-50/60 hover:bg-slate-100/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70 dark:hover:bg-slate-800/70"
-                >
-                  <td class="px-4 py-3">
-                    <input
-                      type="checkbox"
-                      class="h-4 w-4 accent-slate-700 dark:accent-slate-300"
-                      :checked="isMarkedSong(getSongKey(song))"
-                      :aria-label="`Mark ${song.artist} - ${song.title}`"
-                      @change="toggleMarkedSong(getSongKey(song))"
-                    />
-                  </td>
-                  <td class="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                    <span class="song-cell-2lines song-cell-title">{{ song.title }}</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="song-cell-2lines song-cell-artist">{{ song.artist }}</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <button
-                      v-if="getAudioFile(song)"
-                      type="button"
-                      class="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                      :aria-label="activeAudioKey === getSongKey(song) && isActiveAudioPlaying ? 'Pause audio' : 'Play audio'"
-                      @click="toggleAudioPlayback(song)"
-                    >
-                      <font-awesome-icon
-                        :icon="
-                          activeAudioKey === getSongKey(song) && isActiveAudioPlaying
-                            ? 'fa-solid fa-pause'
-                            : 'fa-solid fa-play'
-                        "
-                      />
-                    </button>
-                    <span v-else class="text-slate-400 dark:text-slate-500">—</span>
-                  </td>
-                  <td class="px-4 py-3">
-                    <span class="song-cell-2lines song-cell-language">{{ song.language ?? '—' }}</span>
-                  </td>
-                  <td class="px-4 py-3">{{ song.year ?? '—' }}</td>
-                  <td class="px-4 py-3">
-                    <span class="song-cell-2lines song-cell-genre">{{ song.genre ?? '—' }}</span>
-                  </td>
-                  <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    <div class="flex items-start gap-2">
-                      <button
-                        type="button"
-                        class="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                        @click="toggleSongText(song)"
-                        :aria-label="selectedSongKey === getSongKey(song) ? 'Hide song text' : 'Show song text'"
-                      >
-                        {{ selectedSongKey === getSongKey(song) ? '▾' : '▸' }}
-                      </button>
-                      <span class="song-cell-2lines song-cell-preview">
-                        {{ getSongTextPreview(song) }}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-                <tr aria-hidden="true">
-                  <td
-                    :colspan="8"
-                    class="p-0"
-                    :style="{ height: `${bottomSpacerHeight}px` }"
-                  />
-                </tr>
-              </tbody>
-              </table>
-            </div>
+            <AgGridVue
+              class="ag-theme-quartz h-full w-full text-sm text-slate-700 dark:text-slate-200"
+              :columnDefs="columnDefs"
+              :defaultColDef="defaultColDef"
+              :rowData="sortedSongs"
+              :rowHeight="rowHeight"
+              @grid-ready="onGridReady"
+            />
           </div>
 
           <div
@@ -513,10 +509,6 @@ watch(
 </template>
 
 <style scoped>
-.song-row {
-  height: 64px;
-}
-
 .song-cell-2lines {
   display: -webkit-box;
   overflow: hidden;
