@@ -4,7 +4,6 @@ import { useSongListView } from "~~/composables/useSongListView";
 
 const props = defineProps<{
   title: string;
-  subtitle: string;
   totalCount: number;
   songs: SongInfo[] | null | undefined;
   stateKeyPrefix: string;
@@ -155,16 +154,13 @@ watch(
     class="box-border h-[calc(100vh-3rem)] overflow-hidden bg-slate-50 px-6 pt-8 dark:bg-slate-950"
     :class="activeSong ? 'pb-28' : 'pb-8'"
   >
-    <div class="mx-auto flex h-full max-w-5xl flex-col gap-6">
+    <div class="mx-auto flex h-full max-w-5xl flex-col gap-2 md:gap-6">
       <header class="space-y-2">
         <div class="flex flex-wrap items-center justify-between gap-3">
           <div class="space-y-2">
-            <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+            <h1 class="hidden text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 md:block">
               {{ title }}
             </h1>
-            <p class="text-sm text-slate-600 dark:text-slate-300">
-              {{ subtitle }}
-            </p>
           </div>
           <slot name="header-actions" />
         </div>
@@ -172,7 +168,7 @@ watch(
 
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex w-full flex-col gap-3 md:max-w-2xl">
-          <fieldset class="flex flex-wrap items-center gap-4 text-xs text-slate-600 dark:text-slate-300">
+          <fieldset class="m-0 flex flex-wrap items-center gap-4 border-0 p-0 text-xs text-slate-600 dark:text-slate-300">
             <label class="flex items-center gap-2">
               <input v-model="searchMode" type="radio" value="metadata" />
               Search metadata
@@ -184,6 +180,7 @@ watch(
           </fieldset>
           <div class="flex flex-col gap-2 md:flex-row">
             <label
+              v-if="searchMode === 'metadata'"
               class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm md:max-w-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
               <span class="text-slate-500 dark:text-slate-400">Metadata</span>
@@ -192,10 +189,10 @@ watch(
                 type="search"
                 placeholder="Title, artist, year, genre, language"
                 class="w-full border-none bg-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
-                @focus="searchMode = 'metadata'"
               />
             </label>
             <label
+              v-else
               class="flex w-full items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 shadow-sm md:max-w-md dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
             >
               <span class="text-slate-500 dark:text-slate-400">Text</span>
@@ -204,7 +201,6 @@ watch(
                 type="search"
                 placeholder="Lyrics or words from the song text"
                 class="w-full border-none bg-transparent text-slate-900 placeholder:text-slate-400 focus:outline-none dark:text-slate-100 dark:placeholder:text-slate-500"
-                @focus="searchMode = 'lyrics'"
               />
             </label>
           </div>

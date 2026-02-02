@@ -3,6 +3,10 @@ defineOptions({
   name: "ComparePlaylistsPage",
 });
 
+definePageMeta({
+  title: "Spotify Playlist Compare",
+});
+
 type CompareResponse = {
   intersectionTracks?: Array<{ name: string; artist: string } | null>;
 };
@@ -56,7 +60,7 @@ const sharedTracks = computed<CompareTrack[]>(() => {
   <main class="min-h-screen bg-slate-50 px-6 py-10 dark:bg-slate-950">
     <div class="mx-auto max-w-4xl space-y-6">
       <header class="space-y-2">
-        <h1 class="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 class="hidden text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 md:block">
           Spotify Playlist Compare
         </h1>
         <p class="text-sm text-slate-600 dark:text-slate-300">

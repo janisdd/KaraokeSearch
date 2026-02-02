@@ -6,6 +6,10 @@ defineOptions({
   name: "MarkedSongsListPage",
 });
 
+definePageMeta({
+  title: "Marked Songs",
+});
+
 const { songs, pending, error } = useSongs();
 const { markedSongKeys, unmarkAllSongs } = useMarkedSongs();
 
@@ -21,9 +25,6 @@ const markedSongs = computed(() => {
 });
 
 const totalCount = computed(() => markedSongs.value.length);
-const subtitle = computed(
-  () => `Found ${totalCount.value} marked song(s).`,
-);
 
 const confirmUnmarkAll = () => {
   if (!process.client) {
@@ -42,7 +43,6 @@ const confirmUnmarkAll = () => {
 <template>
   <SongListView
     title="Marked Songs"
-    :subtitle="subtitle"
     :total-count="totalCount"
     :songs="markedSongs"
     state-key-prefix="marked-songs"

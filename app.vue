@@ -3,23 +3,26 @@
     <header class="fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900">
       <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6 md:py-4">
         <NuxtLink to="/" class="flex items-center gap-3 text-sm font-semibold text-slate-900 dark:text-slate-100">
-          <!-- <img src="/logo.png" alt="UltraStar Info logo" style="width: 3rem;" /> -->
-          <span>Karaoke Search</span>
+          <img src="/logo.png" alt="Karaoke Search logo" class="h-8 w-8 md:h-9 md:w-9" />
+          <span class="max-w-[60vw] truncate text-sm font-semibold text-slate-900 dark:text-slate-100 md:hidden">
+            {{ pageTitle }}
+          </span>
+          <span class="hidden md:inline">Karaoke Search</span>
         </NuxtLink>
         <nav class="hidden items-center gap-3 text-sm text-slate-600 dark:text-slate-300 md:flex">
-          <NuxtLink
-            to="/markedSongsList"
-            class="rounded-full px-3 py-1 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
-          >
-            Marked Songs
-          </NuxtLink>
           <NuxtLink
             to="/browseSongs"
             class="rounded-full px-3 py-1 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
             active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
           >
             Browse Songs
+          </NuxtLink>
+          <NuxtLink
+            to="/markedSongsList"
+            class="rounded-full px-3 py-1 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+          >
+            Marked Songs
           </NuxtLink>
           <NuxtLink
             to="/localSongsIntersect"
@@ -70,20 +73,20 @@
       >
         <nav class="flex flex-col gap-2">
           <NuxtLink
-            to="/markedSongsList"
-            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
-            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
-            @click="isMobileMenuOpen = false"
-          >
-            Marked Songs
-          </NuxtLink>
-          <NuxtLink
             to="/browseSongs"
             class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
             active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
             @click="isMobileMenuOpen = false"
           >
             Browse Songs
+          </NuxtLink>
+          <NuxtLink
+            to="/markedSongsList"
+            class="rounded-xl px-3 py-2 transition hover:bg-slate-100 hover:text-slate-900 dark:hover:bg-slate-800 dark:hover:text-white"
+            active-class="bg-slate-900 text-white hover:bg-slate-900 hover:text-white dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-100"
+            @click="isMobileMenuOpen = false"
+          >
+            Marked Songs
           </NuxtLink>
           <NuxtLink
             to="/localSongsIntersect"
@@ -237,6 +240,14 @@ import type { QRCodeErrorCorrectionLevel } from "qrcode";
 const runtimeConfig = useRuntimeConfig()
 const defaultThemeDark = runtimeConfig.public.defaultThemeDark === true
 const themeCookie = useCookie<string | null>('theme')
+const route = useRoute()
+const pageTitle = computed(() => {
+  const title = route.meta?.title
+  if (typeof title === 'string' && title.trim()) {
+    return title
+  }
+  return 'Karaoke Search'
+})
 const isDark = useState(
   'isDarkMode',
   () => themeCookie.value === 'dark' || (themeCookie.value == null && defaultThemeDark)
@@ -253,10 +264,10 @@ const qrCodeSizeOptions = [
   { label: 'Large', value: 320 },
 ]
 const qrCodeErrorCorrectionOptions = [
-  { label: 'Low (L)', value: 'L' },
-  { label: 'Medium (M)', value: 'M' },
-  { label: 'Quartile (Q)', value: 'Q' },
-  { label: 'High (H)', value: 'H' },
+  { label: 'Low', value: 'L' },
+  { label: 'Medium', value: 'M' },
+  { label: 'Quartile', value: 'Q' },
+  // { label: 'High (H)', value: 'H' },
  ] as const
 const qrCodeSize = ref(qrCodeSizeOptions[2].value)
 const qrCodeErrorCorrectionLevel = ref<QRCodeErrorCorrectionLevel>(

@@ -5,16 +5,18 @@ defineOptions({
   name: "SongsPage",
 });
 
+definePageMeta({
+  title: "Browse Songs",
+});
+
 const { songs, pending, error } = useSongs();
 
 const totalCount = computed(() => songs.value?.length ?? 0);
-const subtitle = computed(() => `Found ${totalCount.value} song(s).`);
 </script>
 
 <template>
   <SongListView
     title="Browse Songs"
-    :subtitle="subtitle"
     :total-count="totalCount"
     :songs="songs"
     state-key-prefix="songs"
