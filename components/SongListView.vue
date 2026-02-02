@@ -1,18 +1,17 @@
 <script setup lang="ts">
 import { AgGridVue } from "ag-grid-vue3";
-import type {
-  ColDef,
-  GridApi,
-  GridReadyEvent,
-  ICellRendererParams,
+import {
+  themeQuartz,
+  type ColDef,
+  type GridApi,
+  type GridReadyEvent,
+  type ICellRendererParams,
 } from "ag-grid-community";
 import type { PropType } from "vue";
 import { defineComponent, h, resolveComponent, shallowRef } from "vue";
 import type { SongInfo } from "~~/types/song";
 import { useSongListView } from "~~/composables/useSongListView";
 
-// import "ag-grid-community/styles/ag-grid.css";
-// import "ag-grid-community/styles/ag-theme-quartz.css";
 
 const props = defineProps<{
   title: string;
@@ -28,6 +27,8 @@ const props = defineProps<{
 const { isMarkedSong, toggleMarkedSong, markedSongKeys } = useMarkedSongs();
 
 const songSource = computed(() => props.songs ?? []);
+const isDark = useState<boolean>("isDarkMode", () => false);
+const agThemeMode = computed(() => (isDark.value ? "dark" : "light"));
 
 const {
   activeAudioKey,
@@ -409,6 +410,8 @@ watch(
             <AgGridVue
               class="ag-theme-quartz h-full w-full text-sm text-slate-700 dark:text-slate-200"
               :columnDefs="columnDefs"
+              :theme="themeQuartz"
+              :data-ag-theme-mode="agThemeMode"
               :defaultColDef="defaultColDef"
               :rowData="sortedSongs"
               :rowHeight="rowHeight"
