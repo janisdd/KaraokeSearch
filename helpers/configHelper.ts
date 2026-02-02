@@ -5,9 +5,6 @@ import { Logger, LogLevelEnum } from './logger';
 //NOTE: startup-env must be run before this, else the process.env variables are not set
 
 dotenv.config({ path: "./secrets/.env" });
-if (!fs.existsSync("./secrets/.env")) {
-  Logger.warn("Secrets file not found");
-}
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "";
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "";

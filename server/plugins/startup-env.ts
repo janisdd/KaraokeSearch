@@ -1,10 +1,17 @@
 import { config as loadEnv } from 'dotenv'
 import { Logger, LogLevelEnum } from '~/helpers/logger'
 import { Indexer } from '~/helpers/songsIndexer'
+import fs from "fs";
 
 
 export default defineNitroPlugin(async () => {
   loadEnv()
+
+  // check if the secrets file exists
+  if (!fs.existsSync("./secrets/.env")) {
+    Logger.warn("Secrets file not found");
+  }
+  
   const songsDirKeys = Object.keys(process.env)
     .filter((key) => /^ULTRA_START_SONGS_DIR_PATH\d+$/.test(key))
     .sort((a, b) => {
