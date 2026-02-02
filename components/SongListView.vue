@@ -60,7 +60,7 @@ const {
   audioStorageKey: props.audioStorageKey,
 });
 
-const rowHeight = 64;
+const rowHeight = 48;
 const gridApi = shallowRef<GridApi | null>(null);
 
 const onGridReady = (event: GridReadyEvent) => {
@@ -304,7 +304,7 @@ watch(
 
 <template>
   <main
-    class="box-border h-[calc(100vh-3rem)] overflow-hidden bg-slate-50 px-6 pt-8 dark:bg-slate-950"
+    class="box-border h-[calc(100vh-3rem)] overflow-hidden bg-slate-50 px-3 pt-6 sm:px-6 sm:pt-8 dark:bg-slate-950"
     :class="activeSong ? 'pb-28' : 'pb-8'"
   >
     <div class="mx-auto flex h-full max-w-5xl flex-col gap-2 md:gap-6">
@@ -381,27 +381,33 @@ watch(
         <div v-else class="flex min-h-0 flex-1 flex-col">
           <div
             v-if="selectedSongText"
-            class="mt-4 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+            class="fixed inset-0 z-40 flex items-center justify-center bg-slate-950/50 p-4 backdrop-blur-sm pt-20"
+            role="dialog"
+            aria-modal="true"
           >
-            <div class="mb-2 flex items-center justify-between gap-3">
-              <div>
-                <div class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  Song text
+            <div class="w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700 shadow-xl dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+              <div class="mb-2 flex items-start justify-between gap-3">
+                <div>
+                  <div class="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Song text
+                  </div>
+                  <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {{ selectedSongName }}
+                  </div>
                 </div>
-                <div class="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {{ selectedSongName }}
-                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+                  aria-label="Close song text"
+                  @click="clearSongText"
+                >
+                  <font-awesome-icon icon="fa-solid fa-xmark" />
+                </button>
               </div>
-              <button
-                type="button"
-                class="inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
-                aria-label="Close song text"
-                @click="clearSongText"
-              >
-                <font-awesome-icon icon="fa-solid fa-xmark" />
-              </button>
+              <div class="max-h-[60vh] overflow-y-auto pr-1">
+                <p class="whitespace-pre-wrap break-words">{{ selectedSongText }}</p>
+              </div>
             </div>
-            <p class="whitespace-pre-wrap break-all">{{ selectedSongText }}</p>
           </div>
           <div
             v-if="songSource.length"
@@ -433,7 +439,7 @@ watch(
       v-if="activeSong"
       class="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur dark:border-slate-700 dark:bg-slate-900/95"
     >
-      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-6 py-3">
+      <div class="mx-auto flex max-w-5xl flex-col gap-3 px-3 py-2 sm:px-6 sm:py-3">
         <div class="flex items-start gap-3">
           <div class="h-12 w-12 flex-shrink-0 overflow-hidden rounded-md bg-slate-100 dark:bg-slate-800">
             <img
@@ -618,5 +624,11 @@ watch(
 
 :global(.dark) .player-range:disabled {
   background: #334155;
+}
+
+:global(.dark .ag-theme-quartz) {
+  --ag-background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
+  --ag-odd-row-background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
+  --ag-header-background-color: rgb(2 6 23 / var(--tw-bg-opacity, 1));
 }
 </style>
