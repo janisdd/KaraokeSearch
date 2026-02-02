@@ -51,19 +51,102 @@ const {
   audioStorageKey: props.audioStorageKey,
 });
 
-const scrollToActiveSongInList = () => {
-  if (!process.client || !activeSong.value) {
-    return;
-  }
+const rowHeight = 64;
+const overscan = 6;
+const scrollContainer = ref<HTMLElement | null>(null);
+const scrollTop = ref(0);
+const containerHeight = ref(0);
 
-  const targetId = getSongRowId(activeSong.value);
-  const target = document.getElementById(targetId);
-  if (!target) {
-    return;
+const updateContainerHeight = () => {
+  if (scrollContainer.value) {
+    containerHeight.value = scrollContainer.value.clientHeight;
   }
-
-  target.scrollIntoView({ behavior: "smooth", block: "center" });
 };
+
+let scrollRafId: number | null = null;
+
+const syncScrollTop = () => {
+  if (scrollContainer.value) {
+    scrollTop.value = scrollContainer.value.scrollTop;
+  }
+};
+
+const handleScroll = () => {
+  if (!scrollContainer.value || scrollRafId !== null) {
+    return;
+  }
+
+  scrollRafId = requestAnimationFrame(() => {
+    scrollRafId = null;
+    syncScrollTop();
+  });
+};
+
+const totalRows = computed(() => sortedSongs.value.length);
+const startIndex = computed(() =>
+  Math.max(0, Math.floor(scrollTop.value / rowHeight) - overscan),
+);
+const endIndex = computed(() =>
+  Math.min(
+    totalRows.value,
+    Math.ceil((scrollTop.value + containerHeight.value) / rowHeight) + overscan,
+  ),
+);
+const visibleSongs = computed(() =>
+  sortedSongs.value.slice(startIndex.value, endIndex.value),
+);
+const topSpacerHeight = computed(() => startIndex.value * rowHeight);
+const bottomSpacerHeight = computed(
+  () => (totalRows.value - endIndex.value) * rowHeight,
+);
+
+const scrollToActiveSongInList = () => {
+  if (!process.client || !activeSong.value || !scrollContainer.value) {
+    return;
+  }
+
+  const targetKey = getSongKey(activeSong.value);
+  const index = sortedSongs.value.findIndex(
+    (song) => getSongKey(song) === targetKey,
+  );
+  if (index === -1) {
+    return;
+  }
+
+  const targetTop = index * rowHeight - containerHeight.value / 2 + rowHeight / 2;
+  scrollContainer.value.scrollTo({
+    top: Math.max(0, targetTop),
+    behavior: "smooth",
+  });
+};
+
+onMounted(() => {
+  updateContainerHeight();
+  syncScrollTop();
+  if (process.client) {
+    window.addEventListener("resize", updateContainerHeight);
+  }
+});
+
+onBeforeUnmount(() => {
+  if (process.client) {
+    window.removeEventListener("resize", updateContainerHeight);
+  }
+  if (scrollRafId !== null) {
+    cancelAnimationFrame(scrollRafId);
+    scrollRafId = null;
+  }
+});
+
+watch(
+  () => sortedSongs.value.length,
+  () => {
+    nextTick(() => {
+      updateContainerHeight();
+      syncScrollTop();
+    });
+  },
+);
 </script>
 
 <template>
@@ -171,8 +254,12 @@ const scrollToActiveSongInList = () => {
             v-if="songSource.length"
             class="flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900"
           >
-            <div class="min-h-0 flex-1 overflow-auto">
-              <table class="min-w-full text-left text-sm text-slate-700 dark:text-slate-200">
+            <div
+              ref="scrollContainer"
+              class="min-h-0 flex-1 overflow-auto"
+              @scroll.passive="handleScroll"
+            >
+              <table class="min-w-full w-max table-auto text-left text-sm text-slate-700 dark:text-slate-200">
               <thead
                 class="sticky top-0 z-10 bg-slate-100 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:bg-slate-800 dark:text-slate-300"
               >
@@ -245,7 +332,9 @@ const scrollToActiveSongInList = () => {
               <tbody
                 class="divide-y divide-slate-100 dark:divide-slate-800"
                 v-memo="[
-                  sortedSongs,
+                  visibleSongs,
+                  topSpacerHeight,
+                  bottomSpacerHeight,
                   selectedSongKey,
                   activeAudioKey,
                   isActiveAudioPlaying,
@@ -254,11 +343,14 @@ const scrollToActiveSongInList = () => {
                   lyricsQuery,
                 ]"
               >
+                <tr aria-hidden="true">
+                  <td :colspan="8" class="p-0" :style="{ height: `${topSpacerHeight}px` }" />
+                </tr>
                 <tr
-                  v-for="song in sortedSongs"
+                  v-for="song in visibleSongs"
                   :key="getSongKey(song)"
                   :id="getSongRowId(song)"
-                  class="odd:bg-white even:bg-slate-50/60 hover:bg-slate-100/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70 dark:hover:bg-slate-800/70"
+                  class="song-row odd:bg-white even:bg-slate-50/60 hover:bg-slate-100/60 dark:odd:bg-slate-900 dark:even:bg-slate-900/70 dark:hover:bg-slate-800/70"
                 >
                   <td class="px-4 py-3">
                     <input
@@ -270,9 +362,11 @@ const scrollToActiveSongInList = () => {
                     />
                   </td>
                   <td class="px-4 py-3 font-medium text-slate-900 dark:text-slate-100">
-                    {{ song.title }}
+                    <span class="song-cell-2lines">{{ song.title }}</span>
                   </td>
-                  <td class="px-4 py-3">{{ song.artist }}</td>
+                  <td class="px-4 py-3">
+                    <span class="song-cell-2lines">{{ song.artist }}</span>
+                  </td>
                   <td class="px-4 py-3">
                     <button
                       v-if="getAudioFile(song)"
@@ -291,11 +385,15 @@ const scrollToActiveSongInList = () => {
                     </button>
                     <span v-else class="text-slate-400 dark:text-slate-500">—</span>
                   </td>
-                  <td class="px-4 py-3">{{ song.language ?? '—' }}</td>
+                  <td class="px-4 py-3">
+                    <span class="song-cell-2lines">{{ song.language ?? '—' }}</span>
+                  </td>
                   <td class="px-4 py-3">{{ song.year ?? '—' }}</td>
-                  <td class="px-4 py-3">{{ song.genre ?? '—' }}</td>
+                  <td class="px-4 py-3">
+                    <span class="song-cell-2lines">{{ song.genre ?? '—' }}</span>
+                  </td>
                   <td class="px-4 py-3 text-slate-600 dark:text-slate-300">
-                    <div class="flex items-center gap-2 whitespace-nowrap">
+                    <div class="flex items-start gap-2">
                       <button
                         type="button"
                         class="inline-flex h-6 w-6 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
@@ -304,11 +402,18 @@ const scrollToActiveSongInList = () => {
                       >
                         {{ selectedSongKey === getSongKey(song) ? '▾' : '▸' }}
                       </button>
-                      <span class="max-w-[18rem] truncate align-middle">
+                      <span class="song-cell-2lines">
                         {{ getSongTextPreview(song) }}
                       </span>
                     </div>
                   </td>
+                </tr>
+                <tr aria-hidden="true">
+                  <td
+                    :colspan="8"
+                    class="p-0"
+                    :style="{ height: `${bottomSpacerHeight}px` }"
+                  />
                 </tr>
               </tbody>
               </table>
@@ -408,6 +513,21 @@ const scrollToActiveSongInList = () => {
 </template>
 
 <style scoped>
+.song-row {
+  height: 64px;
+}
+
+.song-cell-2lines {
+  display: -webkit-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.25rem;
+  max-height: 2.5rem;
+  line-clamp: 2;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
 .player-range {
   -webkit-appearance: none;
   appearance: none;
