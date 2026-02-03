@@ -77,6 +77,17 @@ const refreshGrid = (refreshSort = false) => {
   }
 };
 
+const sendSongToBackend = async (song: SongInfo) => {
+  try {
+    await $fetch("/api/sendSong", {
+      method: "POST",
+      body: { songId: song.id },
+    });
+  } catch (error) {
+    console.error("Failed to send song", error);
+  }
+};
+
 const MarkCell = defineComponent({
   props: {
     params: {
@@ -135,6 +146,39 @@ const AudioCell = defineComponent({
         [
           h(FontAwesomeIcon as any, {
             icon: isActive ? "fa-solid fa-pause" : "fa-solid fa-play",
+          }),
+        ],
+      );
+    };
+  },
+});
+
+const SendCell = defineComponent({
+  props: {
+    params: {
+      type: Object as PropType<ICellRendererParams<SongInfo>>,
+      required: true,
+    },
+  },
+  setup(props) {
+    const FontAwesomeIcon = resolveComponent("font-awesome-icon");
+    return () => {
+      const song = props.params.data;
+      if (!song) {
+        return null;
+      }
+      return h(
+        "button",
+        {
+          type: "button",
+          class:
+            "inline-flex h-7 w-7 items-center justify-center rounded text-slate-500 hover:bg-slate-100 hover:text-slate-700 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100",
+          "aria-label": "Send song",
+          onClick: () => sendSongToBackend(song),
+        },
+        [
+          h(FontAwesomeIcon as any, {
+            icon: "fa-solid fa-paper-plane",
           }),
         ],
       );
@@ -234,6 +278,14 @@ const columnDefs = computed<ColDef<SongInfo>[]>(() => [
     sortable: false,
     valueGetter: (params) => (params.data && getAudioFile(params.data) ? 1 : 0),
     cellRenderer: AudioCell,
+  },
+  {
+    headerName: "Send",
+    colId: "send",
+    width: 80,
+    sortable: false,
+    valueGetter: (params) => (params.data ? 1 : 0),
+    cellRenderer: SendCell,
   },
   {
     headerName: "Language",

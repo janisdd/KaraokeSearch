@@ -8,7 +8,7 @@ dotenv.config({ path: "./secrets/.env" });
 
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID || "";
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET || "";
-
+const ULTRA_STAR_COMPANION_PORT = process.env.ULTRA_STAR_COMPANION_PORT || "";
 const PlaylistCacheDirPath = process.env.PLAYLIST_CACHE_DIR_PATH || "";
 
 if (!PlaylistCacheDirPath) {
@@ -37,5 +37,9 @@ export class ConfigHelper {
 
   static getClientSecret() {
     return SPOTIFY_CLIENT_SECRET;
+  }
+
+  static getUltraStarCompanionPort() {
+    return ULTRA_STAR_COMPANION_PORT;
   }
 }

@@ -33,7 +33,8 @@ export default defineNitroPlugin(async () => {
   }
   Logger.log(`[nuxt start] PLAYLIST_CACHE_DIR_PATH: ${process.env.PLAYLIST_CACHE_DIR_PATH}`);
   Logger.log(`[nuxt start] IS_DEFAULT_PAGE_THEME_MODE_DARK: ${process.env.IS_DEFAULT_PAGE_THEME_MODE_DARK}`);
-
+  Logger.log(`[nuxt start] ULTRA_STAR_COMPANION_PORT: ${process.env.ULTRA_STAR_COMPANION_PORT}`);
+  
   switch (process.env.LOG_LEVEL) {
     case 'DEBUG':
       Logger.setLogLevel(LogLevelEnum.DEBUG);
