@@ -7,8 +7,6 @@ type UltraStarCompanionForwardRequest = {
   artist: string;
 };
 
-type UltraStartCompanionPaths = `/selectSong` | `/addToCompanionPlaylist`;
-
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ songId?: string }>(event);
   const songId = body?.songId;

@@ -291,7 +291,7 @@ const columnDefs: ColDef<MatchResult>[] = [
     width: 80,
     sortable: false,
     cellStyle: centerCellStyle,
-    headerTooltip: "Send song to Ultra Star",
+    headerTooltip: "Send song to Ultra Star", // this onl works if the song is in the current list of songs
     valueGetter: (params) => (params.data ? 1 : 0),
     cellRenderer: SendCell,
   },

@@ -292,7 +292,7 @@ const columnDefs = computed<ColDef<SongInfo>[]>(() => [
     width: 80,
     sortable: false,
     cellStyle: centerCellStyle,
-    headerTooltip: "Send song to Ultra Star",
+    headerTooltip: "Send song to Ultra Star", // this onl works if the song is in the current list of songs
     valueGetter: (params) => (params.data ? 1 : 0),
     cellRenderer: SendCell,
   },
@@ -387,16 +387,19 @@ watch(
 
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div class="flex w-full flex-col gap-3 md:max-w-2xl">
-          <fieldset class="m-0 flex flex-wrap items-center gap-4 border-0 p-0 text-xs text-slate-600 dark:text-slate-300">
-            <label class="flex items-center gap-2">
-              <input v-model="searchMode" type="radio" value="metadata" />
-              Search metadata
-            </label>
-            <label class="flex items-center gap-2">
-              <input v-model="searchMode" type="radio" value="lyrics" />
-              Search song text
-            </label>
-          </fieldset>
+          <div class="flex flex-wrap items-center gap-3">
+            <fieldset class="m-0 flex flex-wrap items-center gap-4 border-0 p-0 text-xs text-slate-600 dark:text-slate-300">
+              <label class="flex items-center gap-2">
+                <input v-model="searchMode" type="radio" value="metadata" />
+                Search metadata
+              </label>
+              <label class="flex items-center gap-2">
+                <input v-model="searchMode" type="radio" value="lyrics" />
+                Search song text
+              </label>
+            </fieldset>
+            <slot name="search-mode-actions" />
+          </div>
           <div class="flex flex-col gap-2 md:flex-row">
             <label
               v-if="searchMode === 'metadata'"
