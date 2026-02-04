@@ -1,4 +1,5 @@
 import { ConfigHelper } from "~/helpers/configHelper";
+import { Logger } from "~/helpers/logger";
 import { Indexer } from "~/helpers/songsIndexer";
 
 // this type is used to forward the song to the ultra star app (we are the companion app)
@@ -12,16 +13,19 @@ export default defineEventHandler(async (event) => {
   const songId = body?.songId;
 
   if (!songId) {
+    Logger.error("Missing songId");
     throw createError({ statusCode: 400, message: "Missing songId" });
   }
 
   const song = Indexer.getSongsMap().get(songId);
   if (!song) {
+    Logger.error(`Song not found: ${songId}`);
     throw createError({ statusCode: 404, message: "Song not found" });
   }
 
   const port = ConfigHelper.getUltraStarCompanionPort();
   if (!port) {
+    Logger.error("Ultra Star Companion port not set");
     throw createError({ statusCode: 500, message: "Ultra Star Companion port not set" });
   }
 
@@ -39,6 +43,7 @@ export default defineEventHandler(async (event) => {
   });
 
   if (!response.ok) {
+    Logger.error(`Failed to forward song: ${response.status} ${response.statusText}`);
     throw createError({
       statusCode: 502,
       message: `Failed to forward song: ${response.status} ${response.statusText}`,
